@@ -124,7 +124,8 @@ def main():
         model.CLASSES = checkpoint['meta']['CLASSES']
     else:
         model.CLASSES = dataset.CLASSES
-
+    
+    
     if not distributed:
         model = MMDataParallel(model, device_ids=[0])
         outputs = single_gpu_test(model, data_loader, args.show, args.show_dir)
@@ -135,12 +136,15 @@ def main():
             broadcast_buffers=False)
         outputs = multi_gpu_test(model, data_loader, args.tmpdir,
                                  args.gpu_collect)
-
+    
     rank, _ = get_dist_info()
     if rank == 0:
         if args.out:
             print(f'\nwriting results to {args.out}')
-            mmcv.dump(outputs, args.out)
+            #mmcv.dump(outputs, args.out)
+            outputs = mmcv.load(args.out)
+        
+        
         kwargs = {} if args.options is None else args.options
         if args.format_only:
             dataset.format_results(outputs, **kwargs)

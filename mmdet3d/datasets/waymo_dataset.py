@@ -107,8 +107,9 @@ class WaymoDataset(KittiDataset):
         """
         info = self.data_infos[index]
         sample_idx = info['image']['image_idx']
-        img_filename = os.path.join(self.data_root,
-                                    info['image']['image_path'])
+        #img_filename = os.path.join(self.data_root,
+        #                            info['image']['image_path'])
+        img_filename = ''
 
         # TODO: consider use torch.Tensor only
         rect = info['calib']['R0_rect'].astype(np.float32)
@@ -163,6 +164,7 @@ class WaymoDataset(KittiDataset):
         assert ('waymo' in data_format or 'kitti' in data_format), \
             f'invalid data_format {data_format}'
 
+        '''
         if (not isinstance(outputs[0], dict)) or 'img_bbox' in outputs[0]:
             raise TypeError('Not supported type for reformat results.')
         elif 'pts_bbox' in outputs[0]:
@@ -182,6 +184,10 @@ class WaymoDataset(KittiDataset):
             result_files = self.bbox2result_kitti(outputs, self.CLASSES,
                                                   pklfile_prefix,
                                                   submission_prefix)
+        '''
+        with open("dt_annos.pkl","rb") as f:
+            result_files = pickle.load(f)
+
         if 'waymo' in data_format:
             from ..core.evaluation.waymo_utils.prediction_kitti_to_waymo import \
                 KITTI2Waymo  # noqa
@@ -198,6 +204,8 @@ class WaymoDataset(KittiDataset):
             save_tmp_dir = tempfile.TemporaryDirectory()
             waymo_results_save_dir = save_tmp_dir.name
             waymo_results_final_path = f'{pklfile_prefix}.bin'
+
+
             if 'pts_bbox' in result_files:
                 converter = KITTI2Waymo(result_files['pts_bbox'],
                                         waymo_tfrecords_dir,
@@ -349,6 +357,7 @@ class WaymoDataset(KittiDataset):
             self.show(results, out_dir)
         return ap_dict
 
+
     def bbox2result_kitti(self,
                           net_outputs,
                           class_names,
@@ -378,7 +387,7 @@ class WaymoDataset(KittiDataset):
             annos = []
             info = self.data_infos[idx]
             sample_idx = info['image']['image_idx']
-            image_shape = info['image']['image_shape'][:2]
+            #image_shape = info['image']['image_shape'][:2]
 
             box_dict = self.convert_valid_bboxes(pred_dicts, info)
             if len(box_dict['bbox']) > 0:
@@ -403,7 +412,7 @@ class WaymoDataset(KittiDataset):
                 for box, box_lidar, bbox, score, label in zip(
                         box_preds, box_preds_lidar, box_2d_preds, scores,
                         label_preds):
-                    bbox[2:] = np.minimum(bbox[2:], image_shape[::-1])
+                    #bbox[2:] = np.minimum(bbox[2:], image_shape[::-1])
                     bbox[:2] = np.maximum(bbox[:2], [0, 0])
                     anno['name'].append(class_names[int(label)])
                     anno['truncated'].append(0.0)
